@@ -56,6 +56,12 @@
         "@langchain/qdrant": "^0.0.5",
         "@langchain/weaviate": "^0.0.1",
         "@langchain/xai": "^0.0.1",
+        "@microsoft/microsoft-graph-client": "^3.0.5",
+        "@azure/identity": "^4.4.1",
+        "isomorphic-fetch": "^3.0.0",
+        "@langchain/community": "0.2.38",
+        "@langchain/core": "0.2.29",
+        "@langchain/textsplitters": "0.0.4"
         "@mem0/community": "^0.0.1",
         "@mendable/firecrawl-js": "^1.18.2",
         "@mistralai/mistralai": "0.1.3",
