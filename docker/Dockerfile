@@ -1,25 +1,37 @@
-# Stage 1: Build stage
+# ---------- Stage 1: build your fork ----------
 FROM node:20-alpine AS build
+WORKDIR /app
 
-USER root
+# speed: turn on pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Skip downloading Chrome for Puppeteer (saves build time)
-ENV PUPPETEER_SKIP_DOWNLOAD=true
+# copy repo (context MUST be the root of your fork)
+COPY . .
 
-# Install latest Flowise globally (specific version can be set: flowise@1.0.0)
-RUN npm install -g flowise
+# install & build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN pnpm install --frozen-lockfile && pnpm build
 
-# Stage 2: Runtime stage
+# ---------- Stage 2: runtime ----------
 FROM node:20-alpine
+WORKDIR /app
 
-# Install runtime dependencies
+# runtime deps (pdf/image tools etc.)
 RUN apk add --no-cache chromium git python3 py3-pip make g++ build-base cairo-dev pango-dev curl
-
-# Set the environment variable for Puppeteer to find Chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Copy Flowise from the build stage
-COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
-COPY --from=build /usr/local/bin /usr/local/bin
+# copy compiled artifacts
+COPY --from=build /app/packages/server/dist        ./packages/server/dist
+COPY --from=build /app/packages/ui/dist            ./packages/ui/dist
+COPY --from=build /app/packages/components/dist    ./packages/components/dist
+COPY --from=build /app/node_modules                ./node_modules
+COPY --from=build /app/package.json                ./package.json
 
-ENTRYPOINT ["flowise", "start"]
+# OPTIONAL: hard-remove the 2 crashy nodes (if you didn't pin langchain)
+RUN rm -rf ./packages/components/dist/nodes/chatmodels/ChatFireworks \
+           ./packages/components/dist/nodes/chatmodels/ChatTogetherAI
+
+ENV PORT=3000
+EXPOSE 3000
+
+CMD ["node", "packages/server/dist/index.js"]
