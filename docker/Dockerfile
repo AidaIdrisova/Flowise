@@ -10,7 +10,8 @@ COPY . .
 
 # install & build
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN pnpm install --frozen-lockfile && pnpm build
+RUN pnpm install --no-frozen-lockfile && pnpm build
+
 
 # ---------- Stage 2: runtime ----------
 FROM node:20-alpine
